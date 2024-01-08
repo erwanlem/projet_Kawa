@@ -1,0 +1,5 @@
+- Erreurs affichage
+- Print
+- Compilation typechecker
+- Retour de IF
+- Expr void ?

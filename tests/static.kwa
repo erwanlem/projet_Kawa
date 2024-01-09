@@ -1,0 +1,48 @@
+var classe1 c1;
+var classe1 c2;
+var int n;
+
+class classe1 {
+    static final attribute int pi = 3;
+
+    private attribute int x;
+
+    method void constructor() {
+    }
+
+    method void printpi() {
+        print(classe1.pi);
+    }
+
+    method void setX(int x) {
+        this.x = x;
+    } 
+}
+
+class classe2 {
+    private attribute int n = 123;
+
+    method void constructor() {
+        
+    }
+
+    method int getClasse1Pi() {
+        return this.n;
+    }
+}
+
+main {
+    c1 = new classe1();
+    c2 = new classe1();
+
+    print(c1===c2);
+
+    c1.setX(1);
+    c2.setX(1);
+
+    print(c1===c2);
+
+    c2.setX(2);
+
+    print(c1===c2);
+}

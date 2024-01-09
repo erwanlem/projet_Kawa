@@ -1,0 +1,58 @@
+var point a, b;
+var cercle c;
+
+class point {
+  attribute int x = 0;
+  attribute int y;
+  final attribute int pi;
+
+  method void constructor(int x, int y) {
+    this.y = y;
+    this.pi = 3;
+  }
+
+  private method void print_point() {
+    print(this.x);
+    print(this.y);
+    print(this.pi);
+  }
+
+  method void call_print() {
+    this.print_point();
+  }
+
+}
+
+class cercle extends point {
+  attribute int rayon;
+
+  method void constructor(int r) {
+    this.rayon = r;
+    this.x = 0;
+    this.y = 0;
+  }
+
+  method void print_circle() {
+    this.call_print();
+    print(this.rayon);
+  }
+}
+
+class segment {
+  attribute point a;
+  attribute point b;
+
+}
+
+main {
+  a = new point;
+  b = new point;
+  c = new cercle(10);
+  //a.x = 1;
+  a.y = 2;
+  //b.x = 3;
+  b.y = 4;
+  c.print_circle();
+  print(c instanceof segment);
+  //print(a.x + a.y + b.x + b.y);
+}

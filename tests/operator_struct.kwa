@@ -1,0 +1,25 @@
+var int a = 0;
+var int b = 0;
+var point p1, p2;
+
+class point {
+    private attribute int x; 
+    private attribute int y; 
+
+    method void constructor(int x, int y) {
+        this.x = x;
+        this.y = y;
+    }
+
+    method void addX() {
+        this.x = this.x + 1;
+    }
+}
+
+main {
+    p1 = new point(1, 1);
+    p2 = new point(1, 1);
+    print(p1===p2);
+    p1.addX();
+    print(p1===p2);
+}

@@ -1,0 +1,35 @@
+var int i;
+var bool b;
+var point p;
+
+
+class point {
+    attribute int x;
+    attribute int y;
+
+    method void constructor(int x, int y) {
+        this.x = x;
+        this.y = y;
+    }
+
+    method void affiche() {
+        print(this.x);
+        print(this.y);
+    }
+
+    method int get_x() {
+        return this.x;
+    }
+}
+
+
+main {
+    p = new point(1, 2);
+
+    b = true;
+    
+    p.x = -1;
+    print(p.x);
+    
+    print(p.get_x(1));
+}

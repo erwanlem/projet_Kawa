@@ -1,0 +1,23 @@
+var int begin = 0;
+var int retour = 10;
+var int indice = 0;
+
+class point {
+    private attribute int x;
+    private attribute int y;
+    attribute int nbUtilisation;
+
+    method void constructor() {
+        this.x = 0;
+        this.y = 0;
+    }
+
+    method void utiliser() {
+        //this.nbUtilisations = 0;
+    }
+}
+
+
+main {
+    print(retourner)
+}

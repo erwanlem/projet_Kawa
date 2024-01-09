@@ -1,0 +1,36 @@
+var classe1 c0 = new classe2();
+
+class classe1 {
+
+    method void constructor() {
+
+    }
+}
+
+
+class classe2 extends classe1 {
+
+    method void constructor() {
+        
+    }
+}
+
+class classe3 extends classe2 {
+
+    method void constructor() {
+        
+    }
+
+    method void affiche() {
+        print(0);
+    }
+}
+
+
+
+
+main {
+    print(c0 instanceof classe1);
+
+    ((classe3)c0).affiche();
+}

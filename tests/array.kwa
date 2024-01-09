@@ -1,0 +1,56 @@
+var array[int](2) a0;
+var classe1 c0 = new classe1();
+var array[array[int](3)](10) matrix;
+
+
+class classe1 {
+    private attribute array[int](10) a;
+    static attribute array[int](10) n, m;
+
+    method void constructor() {
+        
+    }
+
+    method void setArray(int n, int indice) {
+        this.a[indice] = n;
+    }
+
+    method void setArrayZero() {
+        var int i = 0;
+        while (i < 10) {
+            this.a[i] = 0;
+            i = i+1;
+        }
+    }
+
+    method void afficheTableau() {
+        var int i = 0;
+        while (i < 10) {
+            print(this.a[i])
+            i = i+1;
+        }
+    }
+}
+
+
+
+main {
+    print(a0);
+    print(a0[0]);
+    a0[0] = 1;
+    print(a0[0]);
+
+    c0.setArrayZero();
+    c0.afficheTableau();
+
+    classe1.n[0] = 1000;
+    print(classe1.n[0]);
+
+    matrix[0][0] = 19;
+    matrix[5][2] = 100;
+    print(matrix[0][0]);
+
+    print(matrix);
+    //print(classe1.m);
+
+}

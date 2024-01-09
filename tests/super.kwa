@@ -1,0 +1,37 @@
+var voiture v1 = new voiture(1);
+var vehicule v2 = new voiture(2);
+
+class vehicule {
+    protected attribute int immat;
+
+    method void constructor(int immat) {
+        this.immat = immat;
+    }
+
+    method void affiche() {
+        print(this.immat);
+    }
+}
+
+class voiture extends vehicule {
+    private attribute int portes;
+    private attribute int immat;
+
+    method void constructor(int immat) {
+        this.immat = immat;
+        this.portes = 3;
+    }
+
+    method void affiche() {
+        super.affiche();
+        //print(this.portes);
+    }
+
+    method void superAffiche() {
+        super.affiche();
+    }
+}
+
+main {
+    v1.affiche();
+}

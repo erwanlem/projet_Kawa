@@ -4,10 +4,15 @@ var point p1, p2;
 
 var array[int](30) t0, t1;
 
+class classe1 {
+    attribute bool a;
+}
+
 class point {
     private attribute int x; 
     private attribute int y;
     static attribute int n0, n1;
+    attribute classe1 cls;
 
     method void constructor(int x, int y) {
         this.x = x;
@@ -20,7 +25,7 @@ class point {
 }
 
 main {
-    // devrait alterner true - false - false - true
+    // commenter pour vérifier
 
     point.n0 = 0;
     point.n1 = 0;
@@ -39,6 +44,20 @@ main {
     p1.addX();
     print(p1===p2);
     print(p1=/=p2);
+    p2.addX();
+
+
+    p1 = new point(1, 1);
+    p2 = new point(1, 1);
+    print(p1===p2);
+    print(p1=/=p2);
+    p1.cls = new classe1;
+    p1.cls.a = true;
+    p2.cls = new classe1;
+    p2.cls.a = false;
+    print(p1===p2);
+    print(p1=/=p2);
+
 
     print(t0 === t1);
     print(t0 =/= t1);

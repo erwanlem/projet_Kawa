@@ -26,7 +26,7 @@ class classe1 {
     method void afficheTableau() {
         var int i = 0;
         while (i < 10) {
-            print(this.a[i])
+            print(this.a[i]);
             i = i+1;
         }
     }

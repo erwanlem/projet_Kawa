@@ -1,11 +1,13 @@
 var classe1 c1;
-var classe1 c2;
+var classe2 c2 = new classe2();
 var int n;
 
 class classe1 {
     static final attribute int pi = 3;
+    static attribute bool estVrai;
+    private static attribute int nb1 = 1;
+    protected static final attribute int nb2 = 2;
 
-    private attribute int x;
 
     method void constructor() {
     }
@@ -14,35 +16,43 @@ class classe1 {
         print(classe1.pi);
     }
 
-    method void setX(int x) {
-        this.x = x;
-    } 
 }
 
-class classe2 {
+class classe2 extends classe1 {
     private attribute int n = 123;
+    attribute classe1 c = new classe1();
 
     method void constructor() {
         
     }
 
     method int getClasse1Pi() {
-        return this.n;
+        return classe1.pi;
+    }
+
+    method void afficheEstVrai() {
+        print(classe1.estVrai);
+    }
+
+    method void afficheNb2() {
+        print(classe1.nb2);
+    }
+
+    method void afficheAccesErreur() {
+        // print(classe1.nb1); // erreur
     }
 }
 
 main {
-    c1 = new classe1();
-    c2 = new classe1();
+    classe1.estVrai = true;
+    c2.afficheEstVrai();        // affiche true
 
-    print(c1===c2);
+    print(classe1.pi);          // affiche 3
+    print(c2.getClasse1Pi());   // affiche 3
 
-    c1.setX(1);
-    c2.setX(1);
+    c2.afficheNb2();            // affiche 2
 
-    print(c1===c2);
 
-    c2.setX(2);
-
-    print(c1===c2);
+    // print(classe1.nb1);      // erreur
+    // print(classe1.nb2);      // erreur
 }

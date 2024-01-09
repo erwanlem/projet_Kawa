@@ -1,9 +1,18 @@
-var classe1 c0 = new classe2();
+var classe1 c0 = new classe3();
+var classe1 c1 = new classe2();
 
 class classe1 {
 
     method void constructor() {
 
+    }
+
+    method void affiche() {
+        print(2);
+    }
+
+    method void afficheZero() {
+        print(0);
     }
 }
 
@@ -13,9 +22,24 @@ class classe2 extends classe1 {
     method void constructor() {
         
     }
+
+    method void affiche() {
+        print(1);
+    }
 }
 
 class classe3 extends classe2 {
+
+    method void constructor() {
+        
+    }
+
+    method void affiche() {
+        print(0);
+    }
+}
+
+class classe4 extends classe1 {
 
     method void constructor() {
         
@@ -31,6 +55,21 @@ class classe3 extends classe2 {
 
 main {
     print(c0 instanceof classe1);
+    print(c0 instanceof classe2);
+    print(c0 instanceof classe3);
+    print(c0 instanceof classe4);
+    print((classe2)(classe1)c0 instanceof classe1);
 
     ((classe3)c0).affiche();
+    ((classe2)c0).affiche();
+    ((classe2)(classe1)c0).affiche();
+    // ((classe4)(classe1)c0).affiche(); // doit lever une erreur
+
+    print(c1 instanceof classe1);
+    print(c1 instanceof classe2);
+    print(c1 instanceof classe3);
+    print(c1 instanceof classe4);
+    ((classe1)c1.afficheZero());
+    ((classe1)c1.affiche());
+    
 }

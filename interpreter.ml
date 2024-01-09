@@ -95,16 +95,16 @@ let exec_prog (p: program): unit =
                                   VBool(Hashtbl.fold (fun a b acc -> let v = Hashtbl.find o'.fields a in acc && (b = v)) o.fields true)
                               | VArray a -> let a' = evala e2 in
                                   VBool (let eq = ref true in (Array.length a = Array.length a') 
-                                  && (for i = 0 to Array.length a do eq := (!eq) && a.(i)=a'.(i) done; !eq))  )
+                                  && (for i = 0 to Array.length a-1 do eq := (!eq) && a.(i)=a'.(i) done; !eq))  )
       | Binop(Strneq,e1,e2,_) -> (match eval e1 with
                               | VInt n -> let n' = evali e2 in VBool (n <> n')
                               | VBool b -> let b' = evalb e2 in VBool(b <> b')
-                              | Null  -> VBool (eval e2 <> Null) 
+                              | Null  -> VBool (eval e2 <> Null)
                               | VObj o  -> let o' = evalo e2 in
-                                  VBool(Hashtbl.fold (fun a b acc -> let v = Hashtbl.find o'.fields a in acc && (b <> v)) o.fields true)
+                                  VBool(Hashtbl.fold (fun a b acc -> let v = Hashtbl.find o'.fields a in acc || (b <> v)) o.fields false)
                               | VArray a -> let a' = evala e2 in
                                 VBool (let eq = ref true in not (Array.length a = Array.length a') 
-                                || not (for i = 0 to Array.length a do eq := (!eq) && a.(i)=a'.(i) done; !eq)) )
+                                || not (for i = 0 to Array.length a-1 do eq := (!eq) && a.(i)=a'.(i) done; !eq)) )
       | Unop(Opp, e, _)       -> VInt(- evali e)
       | Unop(Not, e, _)       -> VBool(Bool.not (evalb e))
       | New(i)             -> (try let o = Hashtbl.find cls i 
@@ -148,7 +148,7 @@ let exec_prog (p: program): unit =
                                   (try List.find (fun a -> a.method_name = i) c.methods
                                   with Not_found -> (match c.parent with
                                                     | None -> raise (Error ("Method '" ^ i ^ "' not found"))
-                                                    | Some p -> Printf.printf "-> %s\n%!" p; find_mtd (Hashtbl.find cls p)
+                                                    | Some p -> find_mtd (Hashtbl.find cls p)
                                                     ) )
                                 in let mtd = find_mtd obj_class
                                 in let l = List.map eval l in

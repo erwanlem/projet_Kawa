@@ -1,0 +1,60 @@
+// test la visibilité et les attributs immuables
+
+var classe1 c1 = new classe1();
+var classe2 c2 = new classe2();
+
+
+class classe1 {
+    private attribute int a;
+    protected attribute int b;
+    final attribute int c;
+    private final attribute int d = 5;
+    final attribute int e;
+
+    method void constructor() {
+        this.a = 0;
+        this.b = 1000;
+        this.e = 10;
+        print(this.getD()); // affiche 5
+    }
+
+    method void afficheA() {
+        print(this.a);
+    }
+
+    protected method void afficheB() {
+        print(this.b);
+        this.afficheError();
+    }
+
+    private method int getD() {
+        return this.d;
+    }
+
+    private method void afficheError() {}
+
+}
+
+class classe2 extends classe1 {
+    private attribute classe1 c;
+
+
+    method void constructor() {
+        this.c = new classe1();
+        this.c.afficheB(); // affiche 1000
+
+        // this.c.afficheError(); // erreur
+    }
+
+}
+
+
+main {
+    c1.afficheA(); // affiche 0
+
+    print(c1.e); // affiche 10
+
+    // print(c1.d); // erreur
+    // c1.e = 10; // erreur
+    // c1.afficheB(); // erreur
+}

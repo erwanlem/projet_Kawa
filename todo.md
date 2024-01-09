@@ -1,0 +1,10 @@
+- [x] ajouter final
+- [x] Visibilités
+- [x] Déclarations en série
+- [x] Déclaration avec valeur initiale
+- [x] Champs statiques
+- [x] Test de type *instanceof*
+- [x] Transtypage (faire des cast)
+- [x] mot clé super
+- [x] tableaux
+- [x] égalité structurelle

@@ -19,7 +19,7 @@ let add_env l tenv =
   
 
 let typecheck_prog p =
-  let tenv = add_env p.globals Env.empty in
+  let tenv = add_env [("this", TVoid, DEFAULT, None)] (add_env p.globals Env.empty) in
   let cls = List.fold_left (fun env o -> Env.add o.class_name o env) Env.empty p.classes in
 
   let rec check e typ tenv pos =
@@ -78,6 +78,8 @@ let typecheck_prog p =
                             | _        -> assert false
                             in
                             let o = Env.find o cls in
+                            let (typ_class, _) = try Env.find "this" tenv with Not_found -> (TVoid, DEFAULT) in
+                            let this_cls = (match typ_class with TClass nom -> nom | TVoid -> "main" | _ -> "") in
                             let rec get_method obj sub =
                               (try (List.find (fun m -> m.method_name = i) obj.methods, sub)
                               with Not_found -> (match obj.parent with
@@ -86,8 +88,8 @@ let typecheck_prog p =
                                                 ))
                             in let mtd', sub = get_method o false
                             in let mtd = if mtd'.visible = DEFAULT then mtd'
-                                        else if mtd'.visible = PROTECTED && (match e1 with This _->true | _->false) then mtd'
-                                        else if mtd'.visible = PRIVATE && (match e1 with This _->true | _->false) && not sub then mtd'
+                                        else if mtd'.visible = PROTECTED && this_cls <> "main" then mtd'
+                                        else if mtd'.visible = PRIVATE && this_cls = o.class_name && not sub then mtd'
                                         else error ("Line "^(string_of_int line.pos_lnum)^": Can't access method " ^ i)
                             in
                             let rec check_param l p =
@@ -116,17 +118,17 @@ let typecheck_prog p =
                                   | t ->error ("Line "^(string_of_int l.pos_lnum)^": Can't cast from "
                                   ^c.class_name^" to "^(typ_to_string t)))
                           in
-                          let rec is_parent p =
+                          let rec is_parent p = (* Recherche dans les classes parentes *)
                             match p.parent with
                             | None -> false
-                            | Some n -> (Printf.printf "%s" n); if c.class_name = n then true else is_parent (Env.find n cls)
-                          in let rec is_child p' =
-                            let r = List.find_opt (fun a -> a.parent = (Some p'.class_name)) p.classes
+                            | Some n -> if c.class_name = n then true else is_parent (Env.find n cls)
+                          in let rec is_child p' = (* Recherche dans les classes filles*)
+                            let r = List.filter (fun a -> a.parent = (Some p'.class_name)) p.classes
                             in match r with
-                            | None -> false
-                            | Some o -> if o.class_name = c.class_name then true else is_child o 
+                            | [] -> false
+                            | l -> List.fold_left (fun acc o -> if o.class_name = c.class_name then true else acc || is_child o) false l 
                           in
-                          if t = c.class_name then (TClass t) 
+                          if t = c.class_name then (TClass t)
                           else if is_parent (Env.find t cls) || is_child (Env.find t cls) then (TClass c.class_name)
                           else error ("Line "^(string_of_int l.pos_lnum)^": Can't cast from "^c.class_name^" to "^t)
 
@@ -142,25 +144,37 @@ let typecheck_prog p =
                                     | TStatic c -> (c, true)
                                     | typ_err  -> type_error_line typ_err (TClass "class") l
                     in
+                    let (typ_class, _) = try Env.find "this" tenv with Not_found -> (TVoid, DEFAULT) in
+                    let this_cls = (match typ_class with TClass nom -> nom | TVoid -> "main" | _ -> "") in
+
+                    (* On récupère l'attribut *)
                     let ((x, t, v, _), p) = 
-                    (if not static then 
+                    (* Si variable non statique *)
+                    (if not static then
                       let o = Env.find cls_name cls
                     in
-                    let rec get_att obj p =
-                      try let t = List.find (fun (x, t, v, _) -> x = s) obj.attributes in (t, p)
+                    let rec get_att obj =
+                      try let t = List.find (fun (x, t, v, _) -> x = s) obj.attributes in (t, obj)
                       with Not_found -> match obj.parent with
                                         | None -> error ("Line "^(string_of_int l.pos_lnum)^": Unknown attribute '" ^ s ^ "' for class " ^ cls_name
                                                   ^ ", did you mean '" ^ Wordcomp.get_closest_word_attributes s obj.attributes ^ "' ?")
-                                        | Some p -> get_att (Env.find p cls) true
+                                        | Some p -> get_att (Env.find p cls)
                     in
-                    get_att o false
-                    else
+                    let t, obj = get_att o in (t, obj.class_name<>this_cls)
+                    
+                    else (* Si variable statique *)
                       let o = Env.find cls_name cls in
-                      let t = List.find (fun (x, t, v, _) -> x = s) o.statics in (t, false) ) in
-                      let (typ_class, _) = try Env.find "this" tenv with Not_found -> (TVoid, DEFAULT) in
-                      let this_cls = (match typ_class with TClass nom -> nom | _ -> "") in
-                      if v = DEFAULT || (v = PROTECTED && this_cls = cls_name) || (v = PRIVATE && this_cls = cls_name && not p) then t
-                    else if (v = FDEFAULT || (v = FPROTECTED && this_cls = cls_name) (* Si Final on lève une exception Final *)
+                      let t = List.find (fun (x, t, v, _) -> x = s) o.statics in
+                      let rec is_parent p =
+                            match p.parent with
+                            | None -> false
+                            | Some n -> if cls_name = n then true else is_parent (Env.find n cls)
+                      in (t, is_parent o) ) 
+                    in  
+                    
+                    (* Vérification visibilité *)
+                    if v = DEFAULT || (v = PROTECTED && this_cls <> "main") || (v = PRIVATE && this_cls = cls_name && not p) then t
+                    else if (v = FDEFAULT || (v = FPROTECTED && this_cls <> "main") (* Si Final on lève une exception Final *)
                         || (v = FPRIVATE && this_cls = cls_name && not p)) then (if not static then raise (Final (t, p)) 
                         else raise (Final (t, true)) )
                     else error ("Line "^(string_of_int l.pos_lnum)^": Can't access attribute " ^ s)

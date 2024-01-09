@@ -33,7 +33,7 @@ let () =
       exit 1
   | Kawa.MissingCurlyBracket ->
          report (lexeme_start_p lb, lexeme_end_p lb);
-         eprintf "Missing curly bracket@.";
+         eprintf "Missing bracket@.";
          exit 1
   | Interpreter.Error s ->
      eprintf "interpreter error: %s@." s;

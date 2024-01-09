@@ -1,11 +1,13 @@
 var array[int](2) a0;
 var classe1 c0 = new classe1();
 var array[array[int](3)](10) matrix;
+var array[bool](0) matrix2;
 
 
 class classe1 {
     private attribute array[int](10) a;
     static attribute array[int](10) n, m;
+    attribute array[array[bool](4)](4) bool_array;
 
     method void constructor() {
         
@@ -33,7 +35,6 @@ class classe1 {
 }
 
 
-
 main {
     print(a0);
     print(a0[0]);
@@ -52,5 +53,6 @@ main {
 
     print(matrix);
     //print(classe1.m);
+    print(c0.bool_array);
 
 }

@@ -45,8 +45,10 @@ let typecheck_prog p =
     (* Unop *)
     | Unop(Opp, e, l)       -> check e TInt tenv (Some l); TInt
     | Unop(Not, e, l)       -> check e TBool tenv (Some l); TBool
-    | Array(a, l)           -> (if List.length a = 0 then (TArray (None, 0))
+    | Array(a, l)           -> (if List.length a = 0 then (TArray (None, 0)) (* Tableau vide*)
                             else let t0 = type_expr (List.hd a) tenv in 
+
+                            (* Vérifie que tous les éléments sont du même type *)
                             List.iter (fun e -> check e t0 tenv (Some l)) a;
                             TArray (Some t0, List.length a) )
     | Get(m)             -> (try type_mem_access m tenv with Final (t, _) -> t) (* accès possible avec final *)
@@ -54,16 +56,21 @@ let typecheck_prog p =
                             with Not_found -> error ("Line "^(string_of_int l.pos_lnum)^": Can't use keyword 'this' outside objects"))
     | Super(l)           -> let t, v = try Env.find "this" tenv 
                                       with Not_found -> error ("Line "^(string_of_int l.pos_lnum)^": Can't use keyword 'super' outside objects")  in
+
+                            (* Recherche classe mère de this *)
                             (match t with
                             | TClass s -> let c =  Env.find s cls in
                                           (match c.parent with
                                           | None -> error ("Line "^(string_of_int l.pos_lnum)^": No superclass for object of type " ^ s)
                                           | Some p -> TClass p)
                             | _ -> (error "Not a class") )
+
     | NewCstr(i, lp, line)     -> let o = Env.find i cls in
+                            (* Récupère le constructeur de la classe *)
                             let constr =  try List.find (fun a -> a.method_name = "constructor") o.methods
                                           with Not_found -> error ("Line "^(string_of_int line.pos_lnum)^": No constructor for class " ^ i)
                             in
+                            (* On vérifie que les paramètres donnés correspondent à ceux attendus par le constructeur *)
                             let rec check_param l p =
                               match l, p with
                               | e :: ll, (s, t, _, _) :: pp -> check e t tenv (Some line); check_param ll pp
@@ -77,9 +84,14 @@ let typecheck_prog p =
                             | TClass c -> c
                             | _        -> assert false
                             in
+
+                            (* Récupère la classe de l'objet *)
                             let o = Env.find o cls in
+                            (* Récupère la classe de l'objet courant ou Void si on est dans le main *)
                             let (typ_class, _) = try Env.find "this" tenv with Not_found -> (TVoid, DEFAULT) in
                             let this_cls = (match typ_class with TClass nom -> nom | TVoid -> "main" | _ -> "") in
+
+                            (* Recherche de la méthode dans la classe de l'objet ou les classes mères *)
                             let rec get_method obj sub =
                               (try (List.find (fun m -> m.method_name = i) obj.methods, sub)
                               with Not_found -> (match obj.parent with
@@ -87,11 +99,15 @@ let typecheck_prog p =
                                                   | Some p -> get_method (Env.find p cls) true
                                                 ))
                             in let mtd', sub = get_method o false
+
+                            (* Vérification de la visibilité *)
                             in let mtd = if mtd'.visible = DEFAULT then mtd'
                                         else if mtd'.visible = PROTECTED && this_cls <> "main" then mtd'
                                         else if mtd'.visible = PRIVATE && this_cls = o.class_name && not sub then mtd'
                                         else error ("Line "^(string_of_int line.pos_lnum)^": Can't access method " ^ i)
                             in
+
+                            (* Vérification des paramètres de la méthode *)
                             let rec check_param l p =
                               match l, p with
                               | e :: ll, (s, t, _, _) :: pp -> check e t tenv (Some line); check_param ll pp
@@ -100,19 +116,25 @@ let typecheck_prog p =
                                               ^ " parameters, got " ^ (string_of_int (List.length lp)) )
                             in
                             check_param lp mtd.params;
-                            mtd.return
+                            mtd.return (* Rend le type de retour *)
+
     | InstanceOf (e, s, l) -> let () = match type_expr e tenv with
-                                    | TClass _ -> ()
+                                    | TClass _ -> () (* Vérifie que l'expression est un objet *)
                                     | _        -> error ("Line "^(string_of_int l.pos_lnum)^": Invalid expression for operator instanceof") 
-                          in (try let _ = Env.find s cls in TBool 
+                          in 
+                          (* On regarde si la chaîne de caractères correspond à une classe existante *)
+                          (try let _ = Env.find s cls in TBool 
                             with Not_found -> error ("Line "^(string_of_int l.pos_lnum)^": "^s^ " is not a valid class name") )
-    | Cast (t, e, l)       -> let m = match t with Get m -> m | _ -> assert false
+
+    | Cast (t, e, l)       -> let m = match t with Get m -> m | _ -> error ("Line "^(string_of_int l.pos_lnum)^": Invalid cast Class name")
                           in
+                          (* Vérifie que la classe de destination existe *)
                           let c = (match m with
                                   | Var (c, l) -> let v = (try Env.find c cls
                                       with Not_found -> error ("Line "^(string_of_int l.pos_lnum)^": "^c^" is not a valid class name")) in v
                                   | _          -> error ("Line "^(string_of_int l.pos_lnum)^": Invalid cast"))
                           in
+                          (* Récupère classe de l'expression *)
                           let t = (match type_expr e tenv with
                                   | TClass t -> t
                                   | t ->error ("Line "^(string_of_int l.pos_lnum)^": Can't cast from "
@@ -128,15 +150,16 @@ let typecheck_prog p =
                             | [] -> false
                             | l -> List.fold_left (fun acc o -> if o.class_name = c.class_name then true else acc || is_child o) false l 
                           in
-                          if t = c.class_name then (TClass t)
+                          if t = c.class_name then (TClass t) (* Si même classe *)
                           else if is_parent (Env.find t cls) || is_child (Env.find t cls) then (TClass c.class_name)
                           else error ("Line "^(string_of_int l.pos_lnum)^": Can't cast from "^c.class_name^" to "^t)
 
-                            
   and type_mem_access m tenv = match m with
     | Var (v, l)       -> (try let t, _ = Env.find v tenv in t 
-                      with Not_found ->
-                        (try let _ = Env.find v cls in TStatic v with Not_found ->
+                      with Not_found -> 
+                        (* Si ce n'est pas une variable valide on regarde si ça peut être un nom de classe *)
+                        (try let _ = Env.find v cls in TStatic v (* Si on trouve on renvoie accès statique *)
+                      with Not_found -> (* Sinon erreur *)
                         (error ("Line "^(string_of_int l.pos_lnum)^": Unknown identifiant '" ^ v 
                         ^ "', did you mean '" ^ Wordcomp.get_closest_word_map v tenv ^ "' ?"))))
     | Field(e, s, l) -> let cls_name, static = match type_expr e tenv with
@@ -144,6 +167,7 @@ let typecheck_prog p =
                                     | TStatic c -> (c, true)
                                     | typ_err  -> type_error_line typ_err (TClass "class") l
                     in
+                    (* Récupère le type de l'objet courant *)
                     let (typ_class, _) = try Env.find "this" tenv with Not_found -> (TVoid, DEFAULT) in
                     let this_cls = (match typ_class with TClass nom -> nom | TVoid -> "main" | _ -> "") in
 
@@ -153,6 +177,7 @@ let typecheck_prog p =
                     (if not static then
                       let o = Env.find cls_name cls
                     in
+                    (* Recherche de l'attribut *)
                     let rec get_att obj =
                       try let t = List.find (fun (x, t, v, _) -> x = s) obj.attributes in (t, obj)
                       with Not_found -> match obj.parent with
@@ -206,19 +231,22 @@ let typecheck_prog p =
                       in
                       (match t with
                       | TClass c | TStatic c -> match_type t (type_expr e tenv)
-                      | TArray (Some t, len) -> (match type_expr e tenv with
-                                                | TArray (Some t, len') -> 
-                                                  if len' <> len then 
+                      | TArray (Some t, len) -> if len <= 0 then error ("Line "^(string_of_int l.pos_lnum)^": Invalid array size")
+                                                else (
+                                                match type_expr e tenv with
+                                                | TArray (Some t, len') ->
+                                                  if len' <> len then (* Le tableau donné doit avoir la taille de celui de la variable *)
                                                     error ("Expected array of length " ^ (string_of_int len) 
                                                   ^ ", got array of length " ^ (string_of_int len'))
-                                                | TArray (None, 0) -> ()
-                                                | t' -> type_error t' (TArray (Some t, len)))
+                                                | TArray (None, 0) -> error ("Expected array of length " ^ (string_of_int len) 
+                                                                      ^ ", got array of length 0")
+                                                | t' -> type_error t' (TArray (Some t, len)) )
                       | TArray (None, _)          -> ()
                       | TInt 		-> check e TInt tenv (Some l)
                       | TVoid    -> check e TVoid tenv (Some l)
                       | TBool    -> check e TBool tenv (Some l))
     | SetDef(m, e, l) -> let t = (try type_mem_access m tenv
-                              with Final (t, b) -> t ) in
+                              with Final (t, b) -> t ) in (* Final ne pose pas de problème en définition directe *)
                             let rec match_type tp typ_e =
                             match typ_e with
                             | TClass c -> if (TClass c) = tp then ()

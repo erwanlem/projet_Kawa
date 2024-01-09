@@ -2,6 +2,7 @@
    Kawa : un petit langage à objets inspiré de Java
  *)
 
+(* Exceptions utilisées par le parser *)
 exception MissingSemi
 exception MissingCurlyBracket
 
@@ -14,7 +15,7 @@ type typ =
   | TBool
   | TArray of typ option * int (* Type * taille *)
   | TClass of string
-  | TStatic of string (* Type classe statique *)
+  | TStatic of string (* Type nom de classe pour accès statique *)
 
 (*
   Visibilité des attributs 
@@ -61,8 +62,9 @@ type expr =
   | NewCstr  of string * expr list * Lexing.position
   (* Appel de méthode *)
   | MethCall   of expr * string * expr list * Lexing.position
-
+  (* Test de type *)
   | InstanceOf of expr * string * Lexing.position
+  (* Transtypage *)
   | Cast       of expr * expr * Lexing.position
 
 (* Accès mémoire : variable ou attribut d'un objet *)
@@ -77,6 +79,7 @@ type instr =
   | Print  of expr
   (* Écriture dans une variable ou un attribut *)
   | Set    of mem_access * expr * Lexing.position
+  (* Écriture dans un un attribut avec valeur donnée *)
   | SetDef of mem_access * expr * Lexing.position
   (* Structures de contrôle usuelles *)
   | If     of expr * seq * seq * Lexing.position
@@ -107,8 +110,11 @@ type method_def = {
   Définition globale -> peut être une méthode / un attribut / un attribut statique
 *)
 type global_def =
+(* Méthide *)
 | MethodDef    of method_def
+(* Attribut *)
 | AttributeDef of (string * typ * visibility * expr option)
+(* Attribut statique *)
 | StaticDef    of (string * typ * visibility * expr option)
 
 (* Définition de classe 
@@ -124,9 +130,9 @@ type class_def = {
   class_name: string;
   attributes: (string * typ * visibility * expr option) list;
   methods: method_def list;
-  statics: (string * typ * visibility * expr option) list;
-  init_decl: seq;
-  static_decl: seq;
+  statics: (string * typ * visibility * expr option) list; (* Attributs statiques de la classe *)
+  init_decl: seq;   (* Attributs à initialiser à la création d'instance *)
+  static_decl: seq; (* Attributs statiques à initialiser en début de programme *)
   parent: string option;
 }
 

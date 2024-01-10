@@ -13,11 +13,11 @@ class point {
     }
 
     method void utiliser() {
-        //this.nbUtilisations = 0;
+        this.nbUtilisation = 0;
     }
 }
 
 
 main {
-    print(retourner)
+    print(retourner);
 }
